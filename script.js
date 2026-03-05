@@ -99,8 +99,9 @@ for (const file of files) {
 for (const artistKey of Object.keys(lib)) {
   for (const albumKey of Object.keys(lib[artistKey])) {
     const album = lib[artistKey][albumKey];
-    
-    if (album.trackTotal != null) album.incomplete = album.tracks.length < album.trackTotal;
+
+    if (album.trackTotal != null)
+      album.incomplete = album.tracks.length < album.trackTotal;
 
     // sort tracks by disk, then track number
     album.tracks.sort((a, b) => {
@@ -115,4 +116,4 @@ for (const artistKey of Object.keys(lib)) {
 
 fs.writeFileSync("library.json", JSON.stringify(lib, null, 2));
 console.timeEnd("Time taken");
-console.log(`✓ Processed ${files.length} files → lib.json`);
+console.log(`✓ Processed ${files.length} files → library.json`);

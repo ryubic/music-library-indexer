@@ -4,7 +4,7 @@ import path from "path";
 // 1. ffprobe runner
 function ffprobe(filePath) {
   return new Promise((resolve, reject) => {
-    const normalized = path.win32.normalize(filePath);
+    const normalized = path.normalize(filePath);
 
     const args = [
       "-v", "error",
@@ -195,10 +195,7 @@ function extractMetadata(raw) {
   };
 }
 
-// -------------------------------------------------------
 // 5. Public API
-// -------------------------------------------------------
-
 export async function getMusicMetadata(filePath) {
   const raw = await ffprobe(filePath);
   return extractMetadata(raw);
