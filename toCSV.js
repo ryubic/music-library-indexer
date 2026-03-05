@@ -5,15 +5,16 @@ function lib_to_csv(lib) {
   for (const artist of Object.keys(lib)) {
     for (const album of Object.keys(lib[artist])) {
       const albumData = {
-        "Album Artist": artist,
         Album: album,
+        "Album Artist": artist,
         Year: lib[artist][album].year,
         Genre: lib[artist][album].genre[0],
-        Lossless: lib[artist][album].lossless,
+        Label: lib[artist][album].label || "[no label]", // as per my friend's request
         "Disk Total": lib[artist][album].diskTotal,
         "Track Total": lib[artist][album].trackTotal,
         "Tracks Found": lib[artist][album].tracks.length,
-        Incomplete: lib[artist][album].incomplete,
+        Lossless: lib[artist][album].lossless ? "✔" : "✘",
+        Complete: lib[artist][album].incomplete ? "✘" : "✔",
       };
       albumArr.push(albumData);
     }
@@ -27,11 +28,18 @@ function lib_to_csv(lib) {
   ].join("\n");
 }
 
-const lib = JSON.parse(readFileSync("library.json"));
+// const
+const fileContent = readFileSync("lib.js", "utf8");
+// remove `const lib_in_lib_js =` and trailing `;`
+const jsonPart = fileContent
+  .replace(/^.*?=\s*/, "") // remove variable assignment
+  .replace(/;?\s*$/, ""); // remove trailing semicolon
+
+const lib = JSON.parse(jsonPart);
+
 const csv = lib_to_csv(lib);
 // UTF-8 BOM
 const BOM = "\uFEFF";
-
-writeFileSync("library.csv", BOM + csv, {
+writeFileSync("lib.csv", BOM + csv, {
   encoding: "utf8",
 });

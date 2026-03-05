@@ -7,11 +7,13 @@ function ffprobe(filePath) {
     const normalized = path.normalize(filePath);
 
     const args = [
-      "-v", "error",
-      "-print_format", "json",
+      "-v",
+      "error",
+      "-print_format",
+      "json",
       "-show_format",
       "-show_streams",
-      normalized
+      normalized,
     ];
 
     const ff = spawn("ffprobe", args);
@@ -19,11 +21,12 @@ function ffprobe(filePath) {
     let stdout = "";
     let stderr = "";
 
-    ff.stdout.on("data", d => stdout += d);
-    ff.stderr.on("data", d => stderr += d);
+    ff.stdout.on("data", (d) => (stdout += d));
+    ff.stderr.on("data", (d) => (stderr += d));
 
-    ff.on("close", code => {
-      if (code !== 0) reject(new Error(stderr || `ffprobe exited with ${code}`));
+    ff.on("close", (code) => {
+      if (code !== 0)
+        reject(new Error(stderr || `ffprobe exited with ${code}`));
       else resolve(JSON.parse(stdout));
     });
   });
@@ -31,34 +34,46 @@ function ffprobe(filePath) {
 
 // 2. Tag map (fully expanded)
 const TAG_MAP = {
-  title:        ["title", "TITLE", "©nam"],
+  title: ["title", "TITLE", "©nam"],
 
-  artist:       ["artist", "ARTIST", "©ART"],
-  album:        ["album", "ALBUM", "©alb"],
-  albumArtist:  ["album_artist", "albumartist", "ALBUMARTIST", "aART", "ALBUM_ARTIST"],
+  artist: ["artist", "ARTIST", "©ART"],
+  album: ["album", "ALBUM", "©alb"],
+  albumArtist: [
+    "album_artist",
+    "albumartist",
+    "ALBUMARTIST",
+    "aART",
+    "ALBUM_ARTIST",
+  ],
 
-  track:        ["track", "TRACK", "tracknumber", "TRACKNUMBER", "trkn"],
-  trackTotal:   ["tracktotal", "TRACKTOTAL", "totaltracks", "TOTALTRACKS", "trkn"],
+  track: ["track", "TRACK", "tracknumber", "TRACKNUMBER", "trkn"],
+  trackTotal: [
+    "tracktotal",
+    "TRACKTOTAL",
+    "totaltracks",
+    "TOTALTRACKS",
+    "trkn",
+  ],
 
-  disk:         ["disc", "DISC", "discnumber", "DISCNUMBER"],
-  diskTotal:    ["disctotal", "DISCTOTAL", "totaldiscs", "TOTALDISCS"],
+  disk: ["disc", "DISC", "discnumber", "DISCNUMBER"],
+  diskTotal: ["disctotal", "DISCTOTAL", "totaldiscs", "TOTALDISCS"],
 
-  genre:        ["genre", "GENRE", "©gen"],
+  genre: ["genre", "GENRE", "©gen"],
 
-  date:         ["date", "DATE", "©day"],
-  year:         ["year", "YEAR"],
+  date: ["date", "DATE", "©day"],
+  year: ["year", "YEAR"],
 
-  copyright:    ["copyright", "COPYRIGHT", "cprt"],
-  label:        ["label", "LABEL", "publisher", "PUBLISHER"],
+  copyright: ["copyright", "COPYRIGHT", "cprt"],
+  label: ["label", "LABEL", "publisher", "Publisher", "PUBLISHER"],
 
-  isrc:         ["isrc", "ISRC"],
-  upc:          ["upc", "UPC", "barcode", "BARCODE"],
+  isrc: ["isrc", "ISRC"],
+  upc: ["upc", "UPC", "barcode", "BARCODE"],
 
-  rating:       ["rating", "RATING"],
-  advisory:     ["itunesadvisory", "ITUNESADVISORY"],
-  explicit:     ["explicit", "EXPLICIT"],
-  bpm:          ["bpm", "TBPM", "BPM"],
-  comment:      ["comment", "COMMENT", "©cmt", "COMM"]
+  rating: ["rating", "RATING"],
+  advisory: ["itunesadvisory", "ITUNESADVISORY"],
+  explicit: ["explicit", "EXPLICIT"],
+  bpm: ["bpm", "TBPM", "BPM"],
+  comment: ["comment", "COMMENT", "©cmt", "COMM"],
 };
 
 // 3. Tag normalization
@@ -106,7 +121,7 @@ function normalizeTags(raw = {}) {
     } else {
       out.genre = String(out.genre)
         .split(/[;,]/)
-        .map(s => s.trim())
+        .map((s) => s.trim())
         .filter(Boolean);
     }
   } else {
@@ -124,26 +139,30 @@ function normalizeTags(raw = {}) {
 
 // 4. Metadata extraction
 function extractMetadata(raw) {
-  const audio = raw.streams.find(s => s.codec_type === "audio") || {};
-  const cover = raw.streams.find(s => s.codec_type === "video") || null;
+  const audio = raw.streams.find((s) => s.codec_type === "audio") || {};
+  // const cover = raw.streams.find((s) => s.codec_type === "video") || null;
 
   const mergedTags = {
     ...(raw.format.tags || {}),
-    ...(audio.tags || {})
+    ...(audio.tags || {}),
   };
 
   const tags = normalizeTags(mergedTags);
 
   // Lossless codec detection
   const LOSSLESS = new Set([
-    "flac", "alac",
-    "pcm_s16le", "pcm_s24le", "pcm_s32le",
-    "pcm_f32le", "pcm_f64le",
-    "wav", "aiff"
+    "flac",
+    "alac",
+    "pcm_s16le",
+    "pcm_s24le",
+    "pcm_s32le",
+    "pcm_f32le",
+    "pcm_f64le",
+    "wav",
+    "aiff",
   ]);
 
   const codec = audio.codec_name || null;
-  const isLossless = codec ? LOSSLESS.has(codec.toLowerCase()) : false;
 
   return {
     // ---------------- TAGS ----------------
@@ -158,7 +177,7 @@ function extractMetadata(raw) {
     disk: tags.disk,
     diskTotal: tags.diskTotal,
 
-    genre: tags.genre,     // always array
+    genre: tags.genre, // always array
     date: tags.date,
     year: tags.year,
 
@@ -166,7 +185,6 @@ function extractMetadata(raw) {
     comment: tags.comment,
     copyright: tags.copyright,
     label: tags.label,
-    publisher: tags.label,
     isrc: tags.isrc,
     upc: tags.upc,
     rating: tags.rating,
@@ -176,22 +194,23 @@ function extractMetadata(raw) {
     // ---------------- TECHNICAL ----------------
     duration: raw.format.duration ? parseFloat(raw.format.duration) : null,
     codec,
-    lossless: isLossless,
+    lossless: LOSSLESS.has(codec.toLowerCase()),
     sampleRate: audio.sample_rate ? parseInt(audio.sample_rate) : null,
     channels: audio.channels || null,
-    bitsPerSample: audio.bits_per_sample || null,
+    bitsPerSample:
+      audio.bits_per_sample || parseInt(audio.bits_per_raw_sample) || null,
     bitrate: raw.format.bit_rate ? parseInt(raw.format.bit_rate) : null,
     container: raw.format.format_name || null,
 
     // ---------------- COVER ART ----------------
-    cover: cover
-      ? {
-          hasCover: true,
-          codec: cover.codec_name,
-          width: cover.width,
-          height: cover.height
-        }
-      : { hasCover: false }
+    // cover: cover
+    //   ? {
+    //       hasCover: true,
+    //       codec: cover.codec_name,
+    //       width: cover.width,
+    //       height: cover.height,
+    //     }
+    //   : { hasCover: false },
   };
 }
 

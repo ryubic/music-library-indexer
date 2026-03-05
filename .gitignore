@@ -146,5 +146,5 @@ dist
 
 
 test/
-library.json
-library.csv
+lib.js
+lib.csv

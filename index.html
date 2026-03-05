@@ -279,9 +279,8 @@
       .filter-group {
         margin-bottom: 2rem;
         padding: 1em;
-         border: 1px solid var(--border);
+        border: 1px solid var(--border);
         border-radius: 12px;
-
       }
       .filter-group h3 {
         font-size: 0.85rem;
@@ -756,6 +755,10 @@
       </div>
     </div>
 
+    <!-- load database file lib.js -->
+    <script src="lib.js"></script>
+
+    <!-- JS -->
     <script>
       // State
       let libraryData = [];
@@ -980,9 +983,7 @@
         loadSort();
         loadFilters();
         try {
-          const response = await fetch("library.json");
-          if (!response.ok) throw new Error("Failed to load library.json");
-          const rawData = await response.json();
+          const rawData = lib_in_lib_js;
           processData(rawData);
           renderStats(); // Pre-calculate stats
           renderFilters();

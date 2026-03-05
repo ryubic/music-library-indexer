@@ -69,6 +69,7 @@ for (const file of files) {
         genre: meta.genre || [],
         year: meta.year || null,
         upc: meta.upc || null,
+        label: meta.label || null,
         copyright: meta.copyright || null,
         lossless: true,
         incomplete: true,
@@ -114,6 +115,7 @@ for (const artistKey of Object.keys(lib)) {
   }
 }
 
-fs.writeFileSync("library.json", JSON.stringify(lib, null, 2));
+const content = `const lib_in_lib_js = ${JSON.stringify(lib, null, 2)};`;
+fs.writeFileSync("lib.js", content);
 console.timeEnd("Time taken");
-console.log(`✓ Processed ${files.length} files → library.json`);
+console.log(`✓ Processed ${files.length} files → lib.js`);
