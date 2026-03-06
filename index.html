@@ -947,7 +947,6 @@
 
       function renderStats() {
         const stats = calculateStats();
-        // REMOVED "Completed" stat item as requested
         statsGrid.innerHTML = `
             <div class="stat-item">
                 <div class="stat-label">Total Albums</div>
@@ -1197,12 +1196,16 @@
             );
           badgesHtml += `<span class="badge badge-year">${album.year}</span>`;
 
-          if (album.incomplete)
-            badgesHtml += `<span class="badge badge-incomplete">Incomplete</span>`;
+          if (album.advisory === 1)
+            badgesHtml += `<span class="badge badge-year">Explicit</span>`;
+          else if (album.advisory === 2)
+            badgesHtml += `<span class="badge badge-year">Clean</span>`;
           if (album.lossless === true)
             badgesHtml += `<span class="badge badge-lossless">Lossless</span>`;
-          else if (album.lossless === false)
-            badgesHtml += `<span class="badge badge-lossy">Lossy</span>`;
+          else badgesHtml += `<span class="badge badge-lossy">Lossy</span>`;
+
+          if (album.incomplete)
+            badgesHtml += `<span class="badge badge-incomplete">Incomplete</span>`;
 
           const metaHtml = `
                 ${album.upc ? `<span>UPC: ${album.upc}</span>` : ""}
@@ -1224,7 +1227,7 @@
               tracksHtml += `
                         <li class="track-item">
                             <div class="track-num">${track.disk}.${track.track.toString().padStart(2, "0")}</div>
-                            <div class="track-title">${track.title}</div>
+                            <div class="track-title">${track.title} ${track.advisory === 1 ? "[E]" : track.advisory === 2 ? "[C]" : ""}</div>
                             <div class="track-artist">${track.artist}</div>
                             <div class="track-codec"><span class="codec-tag">${track.codec || "UNK"}</span></div>
                             <div class="track-tech">${techString || "--"}</div>

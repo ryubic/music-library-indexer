@@ -188,7 +188,7 @@ function extractMetadata(raw) {
     isrc: tags.isrc,
     upc: tags.upc,
     rating: tags.rating,
-    advisory: tags.advisory,
+    advisory: Number(tags.advisory),
     explicit: tags.explicit,
 
     // ---------------- TECHNICAL ----------------

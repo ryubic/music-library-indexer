@@ -68,6 +68,7 @@ for (const file of files) {
         trackTotal: meta.trackTotal ?? null,
         genre: meta.genre || [],
         year: meta.year || null,
+        advisory: 0,
         upc: meta.upc || null,
         label: meta.label || null,
         copyright: meta.copyright || null,
@@ -76,11 +77,21 @@ for (const file of files) {
         tracks: [],
       };
 
+    // unify explicit nature of the track
+    let advisory = 0;
+    if (
+      meta.advisory === 1 ||
+      meta.rating?.toLowerCase() === "explicit" ||
+      meta.explicit === true
+    ) advisory = 1;
+    else if (meta.advisory === 2 || meta.rating?.toLowerCase() === "clean") advisory = 2;
+
     const trackMeta = {
       disk: meta.disk ?? 1,
       track: meta.track ?? null,
       title: meta.title || path.basename(file),
       artist: meta.artist || artistName,
+      advisory,
       isrc: meta.isrc,
       codec: meta.codec ? meta.codec.toUpperCase() : null,
       bitDepth: meta.bitsPerSample ?? null,
@@ -90,6 +101,7 @@ for (const file of files) {
     };
 
     if (!meta.lossless) lib[meta.albumArtist][meta.album].lossless = false;
+    if (advisory === 1) lib[meta.albumArtist][meta.album].advisory = 1;
     lib[meta.albumArtist][meta.album].tracks.push(trackMeta);
   } catch (err) {
     console.error(`Error processing ${file}:`, err.message);

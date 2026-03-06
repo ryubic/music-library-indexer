@@ -10,6 +10,7 @@ function lib_to_csv(lib) {
         Year: lib[artist][album].year,
         Genre: lib[artist][album].genre[0],
         Label: lib[artist][album].label || "[no label]", // as per my friend's request
+        Advisory: lib[artist][album].advisory === 1 ? "[E]" : lib[artist][album].advisory === 2 ? "[C]" : "-",
         "Disk Total": lib[artist][album].diskTotal,
         "Track Total": lib[artist][album].trackTotal,
         "Tracks Found": lib[artist][album].tracks.length,
@@ -28,18 +29,16 @@ function lib_to_csv(lib) {
   ].join("\n");
 }
 
-// const
 const fileContent = readFileSync("lib.js", "utf8");
-// remove `const lib_in_lib_js =` and trailing `;`
+
+// remove variable declaration and trailing semi-colon from fileContent to get the object
 const jsonPart = fileContent
   .replace(/^.*?=\s*/, "") // remove variable assignment
   .replace(/;?\s*$/, ""); // remove trailing semicolon
 
 const lib = JSON.parse(jsonPart);
-
 const csv = lib_to_csv(lib);
+
 // UTF-8 BOM
 const BOM = "\uFEFF";
-writeFileSync("lib.csv", BOM + csv, {
-  encoding: "utf8",
-});
+writeFileSync("lib.csv", BOM + csv, { encoding: "utf8" });
