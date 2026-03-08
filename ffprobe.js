@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
 import path from "path";
+import os from "os";
 
 // 1. ffprobe runner
 function ffprobe(filePath) {
@@ -140,7 +141,6 @@ function normalizeTags(raw = {}) {
 // 4. Metadata extraction
 function extractMetadata(raw) {
   const audio = raw.streams.find((s) => s.codec_type === "audio") || {};
-  // const cover = raw.streams.find((s) => s.codec_type === "video") || null;
 
   const mergedTags = {
     ...(raw.format.tags || {}),
@@ -201,21 +201,42 @@ function extractMetadata(raw) {
       audio.bits_per_sample || parseInt(audio.bits_per_raw_sample) || null,
     bitrate: raw.format.bit_rate ? parseInt(raw.format.bit_rate) : null,
     container: raw.format.format_name || null,
-
-    // ---------------- COVER ART ----------------
-    // cover: cover
-    //   ? {
-    //       hasCover: true,
-    //       codec: cover.codec_name,
-    //       width: cover.width,
-    //       height: cover.height,
-    //     }
-    //   : { hasCover: false },
   };
 }
 
-// 5. Public API
-export async function getMusicMetadata(filePath) {
-  const raw = await ffprobe(filePath);
-  return extractMetadata(raw);
+function renderProgress(done, total) {
+  const width = 80; // bar width in chars
+  const ratio = done / total;
+  const filled = Math.floor(width * ratio);
+  const bar = "#".repeat(filled) + " ".repeat(width - filled);
+  process.stdout.write(
+    `\r[${bar}] ${done}/${total} (${Math.round(ratio * 100)}%)`,
+  );
+}
+
+export async function getMusicMetadata(files = []) {
+  const totalFileCount = files.length;
+  let activeThreads = 0;
+  let completed = 0;
+  let metadata = [];
+  const maxThreads = Math.max(1, Math.floor(os.cpus().length * 0.7));
+  return new Promise((resolve) => {
+    function runNext() {
+      if (files.length === 0 && activeThreads === 0) return resolve(metadata);
+
+      while (files.length > 0 && activeThreads < maxThreads) {
+        const path = files.shift();
+        activeThreads++;
+        ffprobe(path).then((rawMeta) => {
+          let meta = extractMetadata(rawMeta);
+          metadata.push(meta);
+          completed++;
+          renderProgress(completed, totalFileCount);
+          activeThreads--;
+          runNext();
+        });
+      }
+    }
+    runNext();
+  });
 }

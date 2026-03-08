@@ -52,61 +52,59 @@ const files = items
     audioExtensions.has(path.extname(filePath).toLowerCase()),
   );
 
+const totalFileCount = files.length;
 const lib = {};
 
-// process each file
-for (const file of files) {
-  try {
-    const meta = await getMusicMetadata(file);
+const metadataArray = await getMusicMetadata(files);
 
-    if (!lib[meta.albumArtist]) lib[meta.albumArtist] = {};
-    if (!lib[meta.albumArtist][meta.album])
-      lib[meta.albumArtist][meta.album] = {
-        album: meta.album || "Unknown Album",
-        albumartist: meta.albumArtist || "Unknown Artist",
-        diskTotal: meta.diskTotal ?? null,
-        trackTotal: meta.trackTotal ?? null,
-        genre: meta.genre || [],
-        year: meta.year || null,
-        advisory: 0,
-        upc: meta.upc || null,
-        label: meta.label || null,
-        copyright: meta.copyright || null,
-        lossless: true,
-        incomplete: true,
-        tracks: [],
-      };
-
-    // unify explicit nature of the track
-    let advisory = 0;
-    if (
-      meta.advisory === 1 ||
-      meta.rating?.toLowerCase() === "explicit" ||
-      meta.explicit === true
-    ) advisory = 1;
-    else if (meta.advisory === 2 || meta.rating?.toLowerCase() === "clean") advisory = 2;
-
-    const trackMeta = {
-      disk: meta.disk ?? 1,
-      track: meta.track ?? null,
-      title: meta.title || path.basename(file),
-      artist: meta.artist || artistName,
-      advisory,
-      isrc: meta.isrc,
-      codec: meta.codec ? meta.codec.toUpperCase() : null,
-      bitDepth: meta.bitsPerSample ?? null,
-      sampleRate: meta.sampleRate ?? null,
-      lossless: meta.lossless ?? null,
-      duration: meta.duration != null ? Math.round(meta.duration) : null,
+metadataArray.forEach((meta) => {
+  if (!lib[meta.albumArtist]) lib[meta.albumArtist] = {};
+  if (!lib[meta.albumArtist][meta.album])
+    lib[meta.albumArtist][meta.album] = {
+      album: meta.album || "Unknown Album",
+      albumartist: meta.albumArtist || "Unknown Artist",
+      diskTotal: meta.diskTotal ?? null,
+      trackTotal: meta.trackTotal ?? null,
+      genre: meta.genre || [],
+      year: meta.year || null,
+      advisory: 0,
+      upc: meta.upc || null,
+      label: meta.label || null,
+      copyright: meta.copyright || null,
+      lossless: true,
+      incomplete: true,
+      tracks: [],
     };
 
-    if (!meta.lossless) lib[meta.albumArtist][meta.album].lossless = false;
-    if (advisory === 1) lib[meta.albumArtist][meta.album].advisory = 1;
-    lib[meta.albumArtist][meta.album].tracks.push(trackMeta);
-  } catch (err) {
-    console.error(`Error processing ${file}:`, err.message);
-  }
-}
+  // unify explicit nature of the track
+  let advisory = 0;
+  if (
+    meta.advisory === 1 ||
+    meta.rating?.toLowerCase() === "explicit" ||
+    meta.explicit === true
+  )
+    advisory = 1;
+  else if (meta.advisory === 2 || meta.rating?.toLowerCase() === "clean")
+    advisory = 2;
+
+  const trackMeta = {
+    disk: meta.disk ?? 1,
+    track: meta.track ?? null,
+    title: meta.title || path.basename(file),
+    artist: meta.artist || artistName,
+    advisory,
+    isrc: meta.isrc,
+    codec: meta.codec ? meta.codec.toUpperCase() : null,
+    bitDepth: meta.bitsPerSample ?? null,
+    sampleRate: meta.sampleRate ?? null,
+    lossless: meta.lossless ?? null,
+    duration: meta.duration != null ? Math.round(meta.duration) : null,
+  };
+
+  if (!meta.lossless) lib[meta.albumArtist][meta.album].lossless = false;
+  if (advisory === 1) lib[meta.albumArtist][meta.album].advisory = 1;
+  lib[meta.albumArtist][meta.album].tracks.push(trackMeta);
+});
 
 // post-process: mark incomplete albums and sort tracks
 for (const artistKey of Object.keys(lib)) {
@@ -129,5 +127,6 @@ for (const artistKey of Object.keys(lib)) {
 
 const content = `const lib_in_lib_js = ${JSON.stringify(lib, null, 2)};`;
 fs.writeFileSync("lib.js", content);
+console.log();
 console.timeEnd("Time taken");
-console.log(`✓ Processed ${files.length} files → lib.js`);
+console.log(`✓ Processed ${totalFileCount} files → lib.js`);
